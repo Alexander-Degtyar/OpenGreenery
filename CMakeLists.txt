@@ -7,6 +7,6 @@ project( gpio_sample )
 set( SOURCES    main.cpp )
 add_executable( ${PROJECT_NAME}    ${SOURCES} )
 
-# Link wiringPi
-add_subdirectory( lib/third-party/wiringPi )
-target_link_libraries( ${PROJECT_NAME}    wiringPi )
+# Link gpio
+add_subdirectory( lib/gpio )
+target_link_libraries( ${PROJECT_NAME}    gpio )
