@@ -10,6 +10,7 @@ namespace gpio
 InputGPIOctl::InputGPIOctl(const PinId _pin, const Pull _pull)
     :GPIOctl(_pin)
 {
+    pinMode(pin(), INPUT);
     pullUpDnControl(pin(), static_cast<int>(_pull));
 }
 

@@ -4,8 +4,10 @@ set( CMAKE_CXX_STANDARD 17 )
 project( gpio )
 
 set( SOURCES    src/GPIOctl.cpp
+                src/GPIOFactory.cpp
                 src/OutputGPIOctl.cpp
                 src/InputGPIOctl.cpp
+                src/PinId.cpp
                 src/Pinout.cpp )
 
 add_library( ${PROJECT_NAME}    ${SOURCES} )

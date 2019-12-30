@@ -15,6 +15,8 @@ struct PinId
 {
     PinNumber pin;
     Pinout pinout;
+
+    PinId cast_to(Pinout _po) const;
 };
 
 }
