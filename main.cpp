@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include "open_greenery/driver/ads1115/ADS1115.hpp"
 #include "open_greenery/gpio/GPIOFactory.hpp"
@@ -37,6 +38,7 @@ int main()
         std::cout << std::endl;
     
         thr::sleep_for(chr::milliseconds(10));
+<<<<<<< HEAD
     }
 
     // ADC reading sample
@@ -50,6 +52,8 @@ int main()
     catch(const std::exception & e)
     {
         std::cerr << e.what() << std::endl;
+=======
+>>>>>>> origin/master
     }
 
     return 0;
