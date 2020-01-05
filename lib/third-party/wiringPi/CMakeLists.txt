@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.0 )
-set( CMAKE_TOOLCHAIN_FILE    ${CMAKE_CURRENT_SOURCE_DIR}/rpi-toolchain.cmake )
+set( CMAKE_TOOLCHAIN_FILE    ${CMAKE_SOURCE_DIR}/rpi-toolchain.cmake )
 set ( CMAKE_C_STANDARD 11 )
 project( wiringPi )
 

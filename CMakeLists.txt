@@ -7,10 +7,10 @@ project( gpio_sample )
 set( SOURCES    main.cpp )
 add_executable( ${PROJECT_NAME}    ${SOURCES} )
 
+add_subdirectory( lib )
+
 # Link gpio
-add_subdirectory( lib/gpio )
 target_link_libraries( ${PROJECT_NAME}    gpio )
 
 # Link ADS1115
-add_subdirectory( lib/driver/ads1115 )
 target_link_libraries( ${PROJECT_NAME}    ads1115 )
