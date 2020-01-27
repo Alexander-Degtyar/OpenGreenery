@@ -1,6 +1,7 @@
 #ifndef ADS1115_HPP
 #define ADS1115_HPP
 
+#include <chrono>
 #include <cstdint>
 
 namespace open_greenery
@@ -129,6 +130,8 @@ private:
     std::uint16_t cfgRegs() const;
 
     std::uint16_t channelMask(const Channel _ch) const;
+
+    std::chrono::milliseconds conversionDuration(const DR _dr) const;
 
     int m_i2c_dev;
     Config m_cfg;

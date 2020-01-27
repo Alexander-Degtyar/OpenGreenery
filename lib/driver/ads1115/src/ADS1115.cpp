@@ -5,7 +5,6 @@
 #include <thread>
 #include <unistd.h>
 
-constexpr std::chrono::milliseconds CONVERSION_DELAY (4);
 
 namespace open_greenery
 {
@@ -54,10 +53,11 @@ std::int16_t ADS1115::read(const Channel _ch)
 
 
     // Wait for conversion finish
+    std::this_thread::sleep_for(conversionDuration(m_cfg.dr));// Sleep for average conversion duration
     std::uint8_t data [2] {};
     do
     {
-        std::this_thread::sleep_for(CONVERSION_DELAY);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         if (::read(m_i2c_dev, &data, 1) != 1)
         {
             throw std::runtime_error("Failed to read the I2C bus.");
@@ -112,6 +112,22 @@ std::uint16_t ADS1115::channelMask(const Channel _ch) const
             return std::uint16_t(MUX::SINGLE_3);
         default:
             throw std::logic_error("Invalid channel.");
+    }
+}
+
+std::chrono::milliseconds ADS1115::conversionDuration(const DR _dr) const
+{
+    switch (_dr)
+    {
+        case DR::SPS_8: return std::chrono::milliseconds(128);
+        case DR::SPS_16: return std::chrono::milliseconds(64);
+        case DR::SPS_32: return std::chrono::milliseconds(32);
+        case DR::SPS_64: return std::chrono::milliseconds(16);
+        case DR::SPS_128: return std::chrono::milliseconds(8);
+        case DR::SPS_250: return std::chrono::milliseconds(4);
+        case DR::SPS_475: return std::chrono::milliseconds(2);
+        case DR::SPS_860: return std::chrono::milliseconds(1);
+        default: throw std::logic_error("Invalid data rate.");
     }
 }
 
