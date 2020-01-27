@@ -19,12 +19,17 @@ public:
         SCL = 0x4B // The ADDR pin connected to the SCL
     };
 
-    enum class OS : std::uint16_t// Operational status
+    enum class OS_W : std::uint16_t// Operational status. Single-conversion control
     {
         DISABLE = 0x0000,// Write: Set to disable a single-conversion
         SINGLE  = 0x8000,// Write: Set to start a single-conversion
-        BUSY    = 0x0000,// Read: Bit = 0 when conversion is in progress
-        NOTBUSY = 0x8000 // Read: Bit = 1 when device is not performing a conversion
+    };
+
+    enum class OS_R : std::uint8_t// Operational status
+    {
+        BUSY    = 0x00,// Read: Bit = 0 when conversion is in progress
+        NOTBUSY = 0x80,// Read: Bit = 1 when device is not performing a conversion
+        MASK    = 0x80
     };
 
     enum class MUX : std::uint16_t// Input multiplexer configuration
@@ -109,6 +114,8 @@ public:
     };
 
     enum class Channel : std::uint8_t {A0, A1, A2, A3};
+
+    enum class Register : std::uint8_t {CONFIG = 0x01, CONVERSION = 0x00};
 
     ADS1115(const Address _adr);
 
