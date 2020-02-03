@@ -1,11 +1,11 @@
 cmake_minimum_required( VERSION 3.0 )
 set( CMAKE_TOOLCHAIN_FILE    ${CMAKE_SOURCE_DIR}/rpi-toolchain.cmake )# Cross compile toolchain
-set ( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD 17 )
 project( sample )
 
 # Build ADC sample
 add_executable( adc_sample    adc_sample.cpp )
-target_link_libraries( adc_sample    ads1115 )
+target_link_libraries( adc_sample    adc )
 
 # Build GPIO sample
 add_executable( gpio_sample    gpio_sample.cpp )

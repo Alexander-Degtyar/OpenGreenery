@@ -112,9 +112,8 @@ public:
         COMP_QUE cq     = COMP_QUE::NONE;
 
         Config(const Address _adr);
+        std::uint16_t bitmask() const;
     };
-
-    enum class Channel : std::uint8_t {A0, A1, A2, A3};
 
     enum class Register : std::uint8_t {CONFIG = 0x01, CONVERSION = 0x00};
 
@@ -122,15 +121,13 @@ public:
 
     ADS1115(const Config _cfg);
 
-    std::int16_t read(const Channel _ch);
+    std::int16_t read(const MUX _ch) const;
 
-    Config cfg() const;
+    Config config() const;
+
+    void setConfig(const Config _cfg);
 
 private:
-    std::uint16_t cfgRegs() const;
-
-    std::uint16_t channelMask(const Channel _ch) const;
-
     std::chrono::milliseconds conversionDuration(const DR _dr) const;
 
     int m_i2c_dev;
