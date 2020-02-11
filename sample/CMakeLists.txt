@@ -18,3 +18,7 @@ target_link_libraries( pump_sample    pump )
 # Build relay sample
 add_executable( relay_sample    relay_sample.cpp )
 target_link_libraries( relay_sample    relay )
+
+# Build sensor sample
+add_executable( sensor_sample    sensor_sample.cpp )
+target_link_libraries( sensor_sample    analog_sensor )
