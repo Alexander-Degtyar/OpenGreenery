@@ -18,6 +18,7 @@ ADS1115::Config::Config(const Address _adr)
 ADS1115::ADS1115(const Config _cfg)
     :m_cfg(_cfg)
 {
+    std::lock_guard<std::mutex> i2c_lock (m_i2c_mtx);
     m_i2c_dev = open("/dev/i2c-1", O_RDWR);
     if (m_i2c_dev < 0)
     {
@@ -34,9 +35,10 @@ ADS1115::ADS1115(const Address _adr)
     :ADS1115(Config{_adr})
 {}
 
-std::int16_t ADS1115::read(const MUX _ch) const
+std::int16_t ADS1115::read(const MUX _ch)
 {
     // Prepare configuration
+    std::lock_guard<std::mutex> cfg_lock (m_cfg_mtx), i2c_lock (m_i2c_mtx);
     const std::uint16_t adc_cfg = m_cfg.bitmask() | std::uint16_t(_ch) | std::uint16_t(OS_W::SINGLE);
 
     std::uint8_t reg_cfg [3] {std::uint8_t(Register::CONFIG),
@@ -79,13 +81,15 @@ std::int16_t ADS1115::read(const MUX _ch) const
     return (data[0] << 8) | data[1];
 }
 
-ADS1115::Config ADS1115::config() const
+ADS1115::Config ADS1115::config()
 {
+    std::lock_guard<std::mutex> cfg_lock (m_cfg_mtx);
     return m_cfg;
 }
 
 void ADS1115::setConfig(const Config _cfg)
 {
+    std::lock_guard<std::mutex> cfg_lock (m_cfg_mtx);
     m_cfg = _cfg;
 }
 

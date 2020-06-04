@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 
 namespace open_greenery
 {
@@ -105,7 +106,7 @@ public:
         MUX mux         = MUX::DIFF_0_1;
         PGA pga         = PGA::V_6_114;
         MODE mode       = MODE::SINGLE;
-        DR dr           = DR::SPS_128;
+        DR dr           = DR::SPS_8;
         COMP_MODE cm    = COMP_MODE::TRAD;
         COMP_POL cp     = COMP_POL::ACTVLOW;
         COMP_LAT cl     = COMP_LAT::NONLAT;
@@ -121,9 +122,9 @@ public:
 
     ADS1115(const Config _cfg);
 
-    std::int16_t read(const MUX _ch) const;
+    std::int16_t read(const MUX _ch);
 
-    Config config() const;
+    Config config();
 
     void setConfig(const Config _cfg);
 
@@ -131,7 +132,9 @@ private:
     std::chrono::milliseconds conversionDuration(const DR _dr) const;
 
     int m_i2c_dev;
+    std::mutex m_i2c_mtx;
     Config m_cfg;
+    std::mutex m_cfg_mtx;
 };
 
 }
