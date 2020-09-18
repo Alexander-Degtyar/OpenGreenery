@@ -25,7 +25,7 @@ void Pump::water(const std::chrono::milliseconds _dur)
 void Pump::water(const std::uint16_t _vol_ml)
 {
     constexpr float ML_MIN {100.};
-    std::chrono::duration<float, std::ratio<60, 1>> watering_dur (_vol_ml/ML_MIN);
+    std::chrono::duration<float, std::ratio<60, 1>> watering_dur (float(_vol_ml)/ML_MIN);
     water(std::chrono::duration_cast<std::chrono::milliseconds>(watering_dur));
 }
 
