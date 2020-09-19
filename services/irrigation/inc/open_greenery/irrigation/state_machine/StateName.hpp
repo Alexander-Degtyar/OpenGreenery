@@ -4,7 +4,7 @@
 namespace open_greenery::irrigation
 {
 
-enum class SystemState : bool {WET, DRY};
+enum class StateName : bool {WET, DRY};
 
 }
 

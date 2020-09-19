@@ -1,8 +1,11 @@
-project( irrigation )
+project( og-irrigation )
 
-set( SRCS    src/DryState.cpp
-             src/State.cpp
-             src/WetState.cpp )
+set( SRCS    src/state_machine/Context.cpp
+             src/state_machine/DryState.cpp
+             src/state_machine/State.cpp
+             src/state_machine/WetState.cpp
+             src/IrrigationController.cpp
+             src/LoopThread.cpp )
 
 add_library( ${PROJECT_NAME}_impl    ${SRCS} )
 target_include_directories( ${PROJECT_NAME}_impl    PUBLIC inc )

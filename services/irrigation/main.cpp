@@ -1,88 +1,67 @@
-#include <atomic>
-#include <chrono>
+#include <csignal>
+#include <SQLiteCpp/SQLiteCpp.h>
 #include <iostream>
-#include <thread>
+#include <forward_list>
 #include <open_greenery/database/SensorReader.hpp>
 #include <open_greenery/database/IrrigationConfigReader.hpp>
 #include <open_greenery/pump/Pump.hpp>
-#include <open_greenery/irrigation/DryState.hpp>
-#include <open_greenery/irrigation/WetState.hpp>
-#include <SQLiteCpp/SQLiteCpp.h>
+#include <open_greenery/irrigation/IrrigationController.hpp>
 
-constexpr open_greenery::gpio::PinId PUMP_PIN {0, open_greenery::gpio::Pinout::WIRING_PI};
-namespace ogirig = open_greenery::irrigation;
+namespace og = open_greenery;
 namespace ogdb = open_greenery::database;
 namespace ogdf = open_greenery::dataflow;
-using namespace std::chrono_literals;
+
+static std::forward_list<og::irrigation::IrrigationController> s_controllers;
+
+void signalHandler(int signal)
+{
+    std::for_each(s_controllers.begin(), s_controllers.end(), [](auto & ctl){ctl.stop();});
+    exit(signal);
+}
 
 int main()
 {
-    auto db = std::make_shared<SQLite::Database>("/home/pi/og/db/open_greenery.db3", SQLite::OPEN_READONLY);
-    std::cout << "SQLite database file " << db->getFilename() << " opened successfully" << std::endl;
+    signal(SIGTERM, signalHandler);
+    signal(SIGINT, signalHandler);
 
-    ogdb::IrrigationConfigReader cfg_reader ({db, "IrrigationConfig"});
-    auto config = cfg_reader.read(PUMP_PIN);
-    std::cout << "Pump pin: " << config.pin.pin << std::endl
-            << "Dry level: " << config.dry << " Wet level: " << config.wet << std::endl
-            << "Watering volume: " << config.watering_volume << " ml" << std::endl
-            << "Watering period: " << config.watering_period.count() << std::endl
-            << "Soil moisture sensor: " << config.soil_moisture_sensor << std::endl;
-
-    auto UpdateMoisture = [](const ogdf::ISensorReadProvider & _provider,
-            std::atomic_int16_t & _moisture,
-            std::chrono::seconds _period)
+    std::shared_ptr<SQLite::Database> db;
+    try
     {
-        while (true)
-        {
-            try
-            {
-                _moisture = _provider.read();
-            }
-            catch (const SQLite::Exception & _ex)
-            {
-                std::cerr << "Soil Moisture: SQLite error: " << _ex.getErrorCode() << " "
-                    << _ex.getExtendedErrorCode() << " " << _ex.getErrorStr() << " " << _ex.what() << std::endl;
-            }
-            std::cout << "Soil Moisture: " << _moisture << std::endl;
-            std::this_thread::sleep_for(_period);
-        }
-    };
-
-    ogdb::SensorReader soil_moisture_provider ({db, config.soil_moisture_sensor});
-    std::atomic_int16_t current_soil_moisture {};
-    std::cout << "Irrigation Controller: prepared memory for moisture data" << std::endl;
-    std::thread soil_moisture_update_thr (
-            UpdateMoisture,
-            std::ref(soil_moisture_provider),
-            std::ref(current_soil_moisture),
-            1s
-        );
-    soil_moisture_update_thr.detach();
-    std::cout << "Irrigation Controller: started moisture updating thread" << std::endl;
-
-    std::cout << "Irrigation Controller: create pump on pin=" << PUMP_PIN.pin << std::endl;
-    open_greenery::pump::Pump pump (PUMP_PIN);
-
-    std::cout << "Irrigation Controller: prepare state machine" << std::endl;
-    using StatesStorage = std::map<ogirig::SystemState, std::shared_ptr<ogirig::State>>;
-    StatesStorage state_machine {
-            {ogirig::SystemState::WET, std::make_shared<ogirig::WetState>(config)},
-            {ogirig::SystemState::DRY, std::make_shared<ogirig::DryState>(config, pump)}
-    };
-
-    auto to_str = [](ogirig::SystemState _s){return _s==ogirig::SystemState::WET?"WET":"DRY";};
-
-    auto current_state = state_machine.find(ogirig::SystemState::WET)->second;
-    std::cout << "Irrigation Controller: start main loop" << std::endl;
-    while (true)
+        db = std::make_shared<SQLite::Database>("/home/pi/og/db/open_greenery.db3", SQLite::OPEN_READONLY);
+    }
+    catch (const SQLite::Exception & ex)
     {
-        ogirig::SystemState next_state {current_state->handleSoilMoisture(current_soil_moisture)};
-        std::cout << "Irrigation Controller: " << to_str(current_state->state()) << " -> " << to_str(next_state) << std::endl;
-        if (next_state != current_state->state())
-        {
-            current_state = state_machine.find(next_state)->second;
-        }
+        std::cerr << "Database exception: " << ex.getErrorStr() << std::endl;
+        return -1;
     }
 
+    std::shared_ptr<ogdf::IIrrigationConfigDataProvider> cfg_reader =
+            std::make_shared<ogdb::IrrigationConfigReader>(ogdb::Table(db, "IrrigationConfig"));
+
+    const auto cfg_records = cfg_reader->read();
+    if (cfg_records.empty())
+    {
+        std::cerr << "Database doesn't contain irrigation configurations" << std::endl;
+        return -2;
+    }
+
+    for (const auto & cfg : cfg_records)
+    {
+        std::cout << "----- Irrigation service configuration -----" << std::endl
+                  << "Pump pin: " << int(cfg.pin.pin) << std::endl
+                  << "Dry level: " << cfg.dry << " Wet level: " << cfg.wet << std::endl
+                  << "Watering volume: " << cfg.watering_volume << " ml" << std::endl
+                  << "Watering period: " << cfg.watering_period.count() << std::endl
+                  << "Soil moisture sensor: " << cfg.soil_moisture_sensor << std::endl;
+
+        std::shared_ptr<ogdf::ISensorReadProvider> soil_moisture_reader =
+                std::make_shared<ogdb::SensorReader>(ogdb::Table(db, cfg.soil_moisture_sensor));
+        std::shared_ptr<og::pump::IPump> pump =
+                std::make_shared<og::pump::Pump>(cfg.pin);
+
+        auto & ctl = s_controllers.emplace_front(cfg, soil_moisture_reader, pump);
+        ctl.start();
+    }
+    while (true) {} // Execute service until termination signal
     return 0;
 }
