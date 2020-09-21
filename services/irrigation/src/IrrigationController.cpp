@@ -14,11 +14,16 @@ IrrigationController::IrrigationController(open_greenery::dataflow::IrrigationCo
     m_state_machine_context(std::make_unique<Context>(m_cfg, std::move(_pump)))
 {}
 
+IrrigationController::~IrrigationController()
+{
+    stop();
+}
+
 void IrrigationController::start()
 {
     if (!m_irrigation_thr)
     {
-        m_irrigation_thr = std::make_unique<LoopThread>(
+        m_irrigation_thr = std::make_unique<open_greenery::tools::LoopThread>(
                 std::bind(&IrrigationController::IrrigationThreadFunc, this), m_cfg.watering_period
             );
     }
@@ -27,7 +32,10 @@ void IrrigationController::start()
 
 void IrrigationController::stop()
 {
-    m_irrigation_thr->stop();
+    if (m_irrigation_thr)
+    {
+        m_irrigation_thr->stop();
+    }
 }
 
 void IrrigationController::IrrigationThreadFunc()

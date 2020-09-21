@@ -6,7 +6,7 @@
 #include <functional>
 #include <thread>
 
-namespace open_greenery::irrigation
+namespace open_greenery::tools
 {
 
 class LoopThread

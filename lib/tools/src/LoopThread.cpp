@@ -1,6 +1,6 @@
-#include "open_greenery/irrigation/LoopThread.hpp"
+#include <open_greenery/tools/LoopThread.hpp>
 
-namespace open_greenery::irrigation
+namespace open_greenery::tools
 {
 
 LoopThread::LoopThread(std::function<void()> _func, std::chrono::milliseconds _period)
