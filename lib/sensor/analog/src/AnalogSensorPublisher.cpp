@@ -1,30 +1,15 @@
 #include "open_greenery/sensor/AnalogSensorPublisher.hpp"
 
-namespace open_greenery
-{
-namespace sensor
-{
+#include <utility>
 
-AnalogSensorPublisher::AnalogSensorPublisher(std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> _provider)
-    : m_sensor_provider(_provider),
-      m_thread_continue(false)
-{}
+namespace open_greenery::sensor
+{
 
 AnalogSensorPublisher::AnalogSensorPublisher(std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> _provider,
-                                             const std::chrono::milliseconds period)
-    : AnalogSensorPublisher(_provider)
-{
-    enable(period);
-}
-
-AnalogSensorPublisher::~AnalogSensorPublisher()
-{
-    m_thread_continue = false;
-    if (m_thread.joinable())
-    {
-        m_thread.join();
-    }
-}
+                                             std::chrono::milliseconds period)
+    : m_sensor_provider(std::move(_provider)),
+    m_period(period)
+{}
 
 void AnalogSensorPublisher::subscribe(Notificator _notificator)
 {
@@ -44,37 +29,30 @@ void AnalogSensorPublisher::unsubscribe(Notificator _notificator)
     m_notificators.remove_if(predicate);
 }
 
-void AnalogSensorPublisher::enable(const std::chrono::milliseconds period)
+void AnalogSensorPublisher::start()
 {
-    m_thread_continue = true;
-    m_thread = std::thread(&AnalogSensorPublisher::update, this, period);
+    if (!m_reading_thr)
+    {
+        m_reading_thr.emplace([this]{notify(m_sensor_provider->read());}, m_period);
+    }
+    m_reading_thr->start();
 }
 
-void AnalogSensorPublisher::disable()
+void AnalogSensorPublisher::stop()
 {
-    m_thread_continue = false;
+    if (m_reading_thr)
+    {
+        m_reading_thr->stop();
+    }
 }
 
-void AnalogSensorPublisher::notify(const std::int16_t _val) const
+void AnalogSensorPublisher::notify(std::int16_t _val) const
 {
     std::lock_guard<std::mutex> l(m_notificators_mutex);
-    for (Notificator ntf : m_notificators)
+    for (const Notificator & ntf : m_notificators)
     {
         ntf(_val);
     }
 }
 
-void AnalogSensorPublisher::update(const std::chrono::milliseconds period) const
-{
-    auto iteration_start = std::chrono::system_clock::now();
-    while (m_thread_continue)
-    {
-        notify(m_sensor_provider->read());
-
-        iteration_start += period;
-        std::this_thread::sleep_until(iteration_start);
-    }
-}
-
-}
 }

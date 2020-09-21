@@ -3,48 +3,45 @@
 
 #include <atomic>
 #include <chrono>
-#include <functional>
 #include <list>
 #include <memory>
 #include <mutex>
-#include <thread>
+#include <optional>
 #include <open_greenery/dataflow/ISensorReadProvider.hpp>
+#include <open_greenery/tools/LoopThread.hpp>
+#include "IAnalogSensorPublisher.hpp"
 
-namespace open_greenery
-{
-namespace sensor
+namespace open_greenery::sensor
 {
 
-class AnalogSensorPublisher
+class AnalogSensorPublisher : public IAnalogSensorPublisher
 {
 public:
-    using Notificator = std::function<void(std::int16_t)>;
-
-    AnalogSensorPublisher(std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> _provider);
     AnalogSensorPublisher(std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> _provider,
-                          const std::chrono::milliseconds period);
-    AnalogSensorPublisher(const AnalogSensorPublisher &) = delete;
-    AnalogSensorPublisher & operator =(const AnalogSensorPublisher &) = delete;
-    ~AnalogSensorPublisher();
+                          std::chrono::milliseconds period);
 
-    void subscribe(Notificator _notificator);
-    void unsubscribe(Notificator _notificator);
+    /**
+     * @note Internal LoopThread will be stopped in the own destructor
+     */
+    ~AnalogSensorPublisher() override = default;
 
-    void enable(const std::chrono::milliseconds period);
-    void disable();
+    void subscribe(Notificator _notificator) override;
+    void unsubscribe(Notificator _notificator) override;
+
+    void start() override;
+    void stop() override;
 private:
     using NotificatorFuncPtr = void(*)(std::int16_t);
-    void notify(const std::int16_t _val) const;
-    void update(const std::chrono::milliseconds period) const;
+    void notify(std::int16_t _val) const;
 
-    std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> m_sensor_provider;
-    std::thread m_thread;
-    std::atomic_bool m_thread_continue;
     std::list<Notificator> m_notificators;
     mutable std::mutex m_notificators_mutex;
+
+    std::shared_ptr<open_greenery::dataflow::ISensorReadProvider> m_sensor_provider;
+    const std::chrono::milliseconds m_period;
+    std::optional<open_greenery::tools::LoopThread> m_reading_thr;
 };
 
-}
 }
 
 #endif //ANALOG_SENSOR_HPP
