@@ -3,6 +3,7 @@
 
 #include "GPIOFactory.hpp"
 #include "GPIOctl.hpp"
+#include "IInputPin.hpp"
 #include "LogicLevel.hpp"
 #include "PinId.hpp"
 #include "Pull.hpp"
@@ -12,12 +13,12 @@ namespace open_greenery
 namespace gpio
 {
 
-class InputGPIOctl final : public GPIOctl
+class InputGPIOctl final : public IInputPin, public GPIOctl
 {
 public:
     InputGPIOctl(const PinId _pin, const Pull _pull);
-    ~InputGPIOctl() override final;
-    LogicLevel read() const;
+    ~InputGPIOctl() override;
+    LogicLevel read() const override;
 };
 
 }
