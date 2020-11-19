@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -30,9 +31,10 @@ public:
 
     void start() override;
     void stop() override;
-private:
+
+protected:
     using NotificatorFuncPtr = void(*)(std::int16_t);
-    void notify(std::int16_t _val) const;
+    virtual void notify(std::int16_t _val) const;
 
     std::list<Notificator> m_notificators;
     mutable std::mutex m_notificators_mutex;
