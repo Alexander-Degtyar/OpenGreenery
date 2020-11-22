@@ -4,20 +4,22 @@
 #include <thread>
 #include "open_greenery/adc/ADCFactory.hpp"
 #include "open_greenery/database/SensorWriter.hpp"
-#include "open_greenery/sensor/AnalogSensorPublisher.hpp"
+#include <open_greenery/gpio/IInputPin.hpp>
+#include <open_greenery/sensor/ConnectableAnalogSensorPublisher.hpp>
+#include <open_greenery/gpio/GPIOFactory.hpp>
 
 namespace og = open_greenery;
 
 struct ChannelEntities
 {
-    std::shared_ptr<og::dataflow::ISensorReadProvider> sensor_read_provider;
-    std::unique_ptr<og::sensor::AnalogSensorPublisher> sensor_publisher;
+    std::unique_ptr<og::sensor::IAnalogSensorPublisher> sensor_publisher;
     std::unique_ptr<og::dataflow::ISensorDataReceiver> sensor_data_receiver;
 };
 
 struct SampleData
 {
     og::driver::ADS1115::MUX channel;
+    std::shared_ptr<og::gpio::IInputPin> is_connected;
     std::string db_table_name;
 };
 
@@ -25,10 +27,13 @@ int main ()
 {
     try
     {
-        const std::array<SampleData, 4> sample_data {{{og::driver::ADS1115::MUX::SINGLE_0, "A0"},
-                                                      {og::driver::ADS1115::MUX::SINGLE_1, "A1"},
-                                                      {og::driver::ADS1115::MUX::SINGLE_2, "A2"},
-                                                      {og::driver::ADS1115::MUX::SINGLE_3, "A3"}}};
+        auto get_input_pin = [](og::gpio::PinNumber pin){return og::gpio::GPIOFactory::getInstance().getInputGPIOctl(
+                {pin, og::gpio::Pinout::WIRING_PI}, open_greenery::gpio::Pull::DOWN);};
+
+        const std::array<SampleData, 4> sample_data {{{og::driver::ADS1115::MUX::SINGLE_0, get_input_pin(3u), "A0"},
+                                                      {og::driver::ADS1115::MUX::SINGLE_1, get_input_pin(4u), "A1"},
+                                                      {og::driver::ADS1115::MUX::SINGLE_2, get_input_pin(5u), "A2"},
+                                                      {og::driver::ADS1115::MUX::SINGLE_3, get_input_pin(6u), "A3"}}};
         std::array<ChannelEntities, 4> entities;
         og::adc::ADCFactory & adc_factory = og::adc::ADCFactory::getInstance();
 
@@ -61,11 +66,15 @@ int main ()
         {
             // ADS1115 address
             constexpr og::driver::ADS1115::Address adc_addr = og::driver::ADS1115::Address::GND;
-            entity->sensor_read_provider = adc_factory.getReader(adc_addr, entity_data->channel);
-
+            std::shared_ptr<og::dataflow::ISensorReadProvider> sensor_read_provider =
+                    adc_factory.getReader(adc_addr, entity_data->channel);
             // Sensor publisher calls notificators with ADC readers data each minute
             constexpr auto period = std::chrono::minutes(1);
-            entity->sensor_publisher = std::make_unique<og::sensor::AnalogSensorPublisher>(entity->sensor_read_provider, period);
+            entity->sensor_publisher = std::make_unique<og::sensor::ConnectableAnalogSensorPublisher>(
+                    sensor_read_provider,
+                    entity_data->is_connected,
+                    period
+                );
 
             // Database sensor writer saves data to the table
             og::database::Table table (db, entity_data->db_table_name);
