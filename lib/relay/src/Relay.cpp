@@ -1,5 +1,4 @@
 #include "open_greenery/relay/Relay.hpp"
-#include "open_greenery/gpio/GPIOFactory.hpp"
 
 namespace open_greenery
 {
@@ -8,10 +7,16 @@ namespace relay
 
 namespace ogio = open_greenery::gpio;
 
-Relay::Relay(const ogio::PinId _pin)
-    :m_enabled(false),
-    m_gpio(ogio::GPIOFactory::getInstance().getOutputGPIOctl(_pin))
-{}
+Relay::Relay(std::shared_ptr<ogio::IOutputPin> _pin)
+    :m_enabled(false)
+{
+    if (_pin == nullptr)
+    {
+        throw std::logic_error("Output pin pointer in null");
+    }
+    m_gpio = std::move(_pin);
+    m_gpio->write(ogio::LogicLevel::LOW);
+}
 
 Relay::~Relay()
 {

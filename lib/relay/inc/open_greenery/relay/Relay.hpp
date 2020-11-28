@@ -2,8 +2,7 @@
 #define RELAY_HPP
 
 #include <memory>
-#include "open_greenery/gpio/OutputGPIOctl.hpp"
-#include "open_greenery/gpio/PinId.hpp"
+#include "open_greenery/gpio/IOutputPin.hpp"
 
 namespace open_greenery
 {
@@ -13,7 +12,7 @@ namespace relay
 class Relay
 {
 public:
-    Relay(const open_greenery::gpio::PinId _pin);
+    Relay(std::shared_ptr<open_greenery::gpio::IOutputPin> _pin);
 
     ~Relay();
 
@@ -27,7 +26,7 @@ public:
 
 private:
     bool m_enabled;
-    std::shared_ptr<open_greenery::gpio::OutputGPIOctl> m_gpio;
+    std::shared_ptr<open_greenery::gpio::IOutputPin> m_gpio;
 };
 
 }
