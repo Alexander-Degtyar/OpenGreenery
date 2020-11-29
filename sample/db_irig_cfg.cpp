@@ -1,6 +1,7 @@
 #include <iostream>
 #include <open_greenery/database/IrrigationConfigReader.hpp>
 #include <open_greenery/database/IrrigationConfigWriter.hpp>
+#include <open_greenery/database/SensorReader.hpp>
 #include <open_greenery/gpio/PinId.hpp>
 
 namespace og = open_greenery;
@@ -17,13 +18,14 @@ int main()
     std::int16_t wet {8000};
     std::uint16_t watering_volume {10};
     std::chrono::seconds watering_period {5};
-    open_greenery::database::SensorReader soil_moisture_reader ({db, "A3"});
-    writer.write({pin, dry, wet, watering_volume, watering_period, soil_moisture_reader});
+    const std::string soil_moisture_table {"A3"};
+    open_greenery::database::SensorReader soil_moisture_reader ({db, soil_moisture_table});
+    writer.write({pin, dry, wet, watering_volume, watering_period, "A3"});
 
     og::database::IrrigationConfigReader reader ({db, "IrrigationConfig"});
     const auto record = reader.read(pin);
     std::cout << "Pin: " << record.pin.pin << " Dry: " << dry << " Wet: " << wet << " Vol.: " << watering_volume
-        << " Period: " << watering_period.count() << " Reader: " << soil_moisture_reader.table().name;
+        << " Period: " << watering_period.count() << " Reader: " << soil_moisture_table;
 
     return 0;
 }
