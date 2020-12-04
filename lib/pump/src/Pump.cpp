@@ -1,13 +1,17 @@
 #include "open_greenery/pump/Pump.hpp"
 #include <thread>
+#include <open_greenery/gpio/GPIOFactory.hpp>
 
 namespace open_greenery
 {
 namespace pump
 {
 
-Pump::Pump(open_greenery::gpio::PinId _pin)
-        : m_relay(_pin)
+namespace ogio = open_greenery::gpio;
+
+Pump::Pump(ogio::PinId _pin)
+// TODO: Use dependency injection. Get pointer to Pump interface.
+        : m_relay(ogio::GPIOFactory::getInstance().getOutputGPIOctl({_pin.pin, _pin.pinout}))
 {}
 
 Pump::~Pump()

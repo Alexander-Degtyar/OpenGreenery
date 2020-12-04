@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include "open_greenery/gpio/PinId.hpp"
 #include "open_greenery/relay/Relay.hpp"
 #include "IPump.hpp"
 
