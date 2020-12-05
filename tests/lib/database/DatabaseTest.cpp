@@ -491,9 +491,3 @@ TEST_F(SensorDataFunctionalTest, MultipleDateTimeValues)
 
     EXPECT_EQ(diff.size(), 0u);// Actual set equals to expected one
 }
-
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

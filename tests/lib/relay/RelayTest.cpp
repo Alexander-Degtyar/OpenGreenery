@@ -35,7 +35,7 @@ protected:
     ogr::Relay m_relay;
 };
 
-TEST(RelayConstructor, NullOutputPin)
+TEST(RelayConstructorTest, NullOutputPin)
 {
     EXPECT_THROW(ogr::Relay(nullptr);, std::logic_error);
 }
@@ -72,10 +72,4 @@ TEST_F(RelayTest, Toggle)
     const auto second {m_relay.enabled()};
 
     EXPECT_NE(first, second);
-}
-
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }
