@@ -47,7 +47,7 @@ int main ()
     std::this_thread::sleep_for(std::chrono::seconds(3));
     const auto to = QDateTime::currentDateTime();
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    a0.disable();
+    a0.stop();
 
     // Read saved to the DB data
     if (table.valid())
